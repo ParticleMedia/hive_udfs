@@ -8,7 +8,6 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.json.JSONException;
 
 /**
  * ComputeLabelUDF
@@ -31,14 +30,12 @@ public class ComputeLabelUDF extends GenericUDF {
 
         // tinyint
         for (int i = 0; i < 7; i++) {
-converters[i] = ObjectInspectorConverters.getConverter(arguments[i],
-PrimitiveObjectInspectorFactory.writableShortObjectInspector);
+            converters[i] = ObjectInspectorConverters.getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableShortObjectInspector);
         }
 
         // int features
         for (int i = 7; i < 10; i++) {
-converters[i] = ObjectInspectorConverters.getConverter(arguments[i],
-PrimitiveObjectInspectorFactory.writableIntObjectInspector);
+            converters[i] = ObjectInspectorConverters.getConverter(arguments[i], PrimitiveObjectInspectorFactory.writableIntObjectInspector);
         }
 
         converters[10] = ObjectInspectorConverters.getConverter(arguments[10],
@@ -49,12 +46,8 @@ PrimitiveObjectInspectorFactory.writableIntObjectInspector);
     }
 
     @Override
-    public Object evaluate(DeferredObject[] arguments) throws HiveException, JSONException {
+    public Object evaluate(DeferredObject[] arguments) throws HiveException {
         assert (arguments.length == 12);
-
-        if (arguments[0].get() == null || arguments[1].get() == null) {
-            return null;
-        }
 
         Short checked = (Short) converters[0].convert(arguments[0].get());
         Short clicked = (Short) converters[1].convert(arguments[1].get());
@@ -74,13 +67,11 @@ PrimitiveObjectInspectorFactory.writableIntObjectInspector);
 
     @Override
     public String getDisplayString(String[] children) {
-        assert (children.length == 10);
-        return "ComputeLabelUDF()";
+        assert (children.length == 12);
+        return "ComputeLabelUDF(*)";
     }
 
-    private Boolean AssignLabel(String ctype, Short checked, Short clicked, 
-    Short autoplay, Short shared, Short liked, Short thumbed_up, Short thumbed_down, Integer pv_time, Integer cv_time, 
-    Integer vv_time, Float progress)
+    private Boolean AssignLabel(String ctype, Short checked, Short clicked, Short autoplay, Short shared, Short liked, Short thumbed_up, Short thumbed_down, Integer pv_time, Integer cv_time, Integer vv_time, Float progress)
     {
         if (shared == 1 || thumbed_up == 1 || liked == 1)
         {
