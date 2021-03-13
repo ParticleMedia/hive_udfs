@@ -5,9 +5,13 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
+import org.apache.hadoop.hive.serde2.io.ShortWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 
 /**
  * ComputeLabelUDF
@@ -49,18 +53,20 @@ public class ComputeLabelUDF extends GenericUDF {
     public Object evaluate(DeferredObject[] arguments) throws HiveException {
         assert (arguments.length == 12);
 
-        Short checked = (Short) converters[0].convert(arguments[0].get());
-        Short clicked = (Short) converters[1].convert(arguments[1].get());
-        Short autoplay = (Short) converters[2].convert(arguments[2].get());
-        Short shared = (Short) converters[3].convert(arguments[3].get());
-        Short liked = (Short) converters[4].convert(arguments[4].get());
-        Short thumbed_up = (Short) converters[5].convert(arguments[5].get());
-        Short thumbed_down = (Short) converters[6].convert(arguments[6].get());
-        Integer pv_time = (Integer) converters[7].convert(arguments[7].get());
-        Integer cv_time = (Integer) converters[8].convert(arguments[8].get());
-        Integer vv_time = (Integer) converters[9].convert(arguments[9].get());
-        String ctype = (String) converters[10].convert(arguments[10].get());
-        Float progress = (Float) converters[11].convert(arguments[11].get());
+        short checked = GetShortValue(0, arguments);
+        short clicked = GetShortValue(1, arguments);
+        short autoplay = GetShortValue(2, arguments);
+        short shared = GetShortValue(3, arguments);
+        short liked = GetShortValue(4, arguments);
+        short thumbed_up = GetShortValue(5, arguments);
+        short thumbed_down = GetShortValue(6, arguments);
+
+        int pv_time = GetIntValue(7, arguments);
+        int cv_time = GetIntValue(8, arguments);
+        int vv_time = GetIntValue(9, arguments);
+
+        Text ctype = (Text) converters[10].convert(arguments[10].get());
+        float progress = GetFloatValue(11, arguments);
 
         return AssignLabel(ctype, checked, clicked, autoplay, shared, liked, thumbed_up, thumbed_down, pv_time, cv_time, vv_time, progress);
     }
@@ -71,7 +77,22 @@ public class ComputeLabelUDF extends GenericUDF {
         return "ComputeLabelUDF(*)";
     }
 
-    private Boolean AssignLabel(String ctype, Short checked, Short clicked, Short autoplay, Short shared, Short liked, Short thumbed_up, Short thumbed_down, Integer pv_time, Integer cv_time, Integer vv_time, Float progress)
+    private short GetShortValue(int index, DeferredObject[] arguments) throws HiveException {
+        ShortWritable temp = (ShortWritable) converters[index].convert(arguments[index].get());
+        return (temp == null) ? 0 : temp.get();
+    }
+
+    private float GetFloatValue(int index, DeferredObject[] arguments) throws HiveException {
+        FloatWritable temp = (FloatWritable) converters[index].convert(arguments[index].get());
+        return (temp == null) ? 0.0f : temp.get();
+    }
+
+    private int GetIntValue(int index, DeferredObject[] arguments) throws HiveException {
+        IntWritable temp = (IntWritable) converters[index].convert(arguments[index].get());
+        return (temp == null) ? 0 : temp.get();
+    }
+
+    private Boolean AssignLabel(Text ctype, Short checked, Short clicked, Short autoplay, Short shared, Short liked, Short thumbed_up, Short thumbed_down, Integer pv_time, Integer cv_time, Integer vv_time, Float progress)
     {
         if (shared == 1 || thumbed_up == 1 || liked == 1)
         {
@@ -79,7 +100,7 @@ public class ComputeLabelUDF extends GenericUDF {
         }
 
         if (clicked == 1) {
-            if (ctype.equals("video_web")) {
+            if ("video_web".equals(ctype)) {
                 return vv_time > 10000 || progress > 0.2;
             }
             else {
